@@ -31,6 +31,26 @@ Decode and encode are both supported. A decode/encode/decode round-trip
 on every sample tested produces byte-identical XML, and the resulting
 files are accepted by `ewd`.
 
+The decoded XML is a narrow dialect: elements and attributes only (no text
+content, CDATA or comments), the five predefined entities, and attribute
+values that can hold raw CR/LF and NUL bytes. `parseEwXml()` reads it into an
+`EwElement` tree (name, attributes in document order, children, parent) and
+`ewXmlText()` writes it back byte-identical; this holds for all 592 designs
+in the test corpus (~2 GB of XML). It is about 4x faster than a generic XML
+parser on these files and has no dependencies. Element helpers cover EW's
+conventions:
+
+- `cls`: the `Class` attribute (`CIITLinkComp`, `UBComponent`, ...).
+- `str(attr)`: an EW string, decoding `&ASC<text>` and `&UNI<text>` with
+  `_uc<n><hex>` escapes (`&UNI10_uc100b5F` -> `10µF`). Also exported as
+  `decodeEwString` / `encodeEwString`.
+- `num`, `numOr`, `bigint` (64-bit layer masks), `bool` (`"1"`/`"0"`).
+- `child`, `childrenNamed`, `at(...path)`, `find`, `findAll`,
+  `findByClass`, `closest`, `descendants()`.
+
+Design coordinates are integer nanometres; `nmToMm`, `nmToMil`, `mmToNm`,
+`milToNm` and `NM_PER_MM` / `NM_PER_MIL` convert.
+
 ### ewnet (`.ewnet`)
 
 The netlist Multisim writes for Ultiboard forward annotation: UTF-16LE text
@@ -241,6 +261,7 @@ import {
   parseEwnet,
   ewnetConnectivity,
   formatByKey,
+  parseEwXml,
 } from 'electronics-workbench-decoder';
 
 // Filename → decoded JS values (format detected from the file's magic bytes)
@@ -259,10 +280,18 @@ const ewprj = encodeBuffer(xml, formatByKey('ewprj')!);
 const db = decodeMdbBuffer(prjBytes); // → { format, source, tables: {...} }
 const netlist = parseEwnet(ewnetBytes); // → { toolInfo, nets, components, layers, tree }
 const nets = ewnetConnectivity(netlist); // Map<net name, { refdes, pin }[]>
+
+// EW XML document model
+const doc = parseEwXml(xml); // → { declaration, root: EwElement, application }
+for (const link of doc.root.findByClass('CIITLinkComp')) {
+  console.log(link.num('ObjectID'), link.str('Name'));
+}
 ```
 
 Exposed: `decodeFile`, `decodeBuffer`, `encodeBuffer`, `decodeMdbBuffer`,
-`parseEwnet`, `ewnetConnectivity`, `ewnetText`, `parseSExpr`, the
+`parseEwnet`, `ewnetConnectivity`, `ewnetText`, `parseSExpr`,
+`parseEwXml`, `ewXmlText`, `EwElement`, `decodeEwString`,
+`encodeEwString`, the nanometre unit helpers, the
 format registry (`FORMATS`, `formatByKey`, `formatForExtension`,
 `detectFormatByHeader`, `detectFileFormat`), and the supporting types
 (`EwbFormat`, `MdbJson`, `DecodeResult`, `DecodedXml`, …).

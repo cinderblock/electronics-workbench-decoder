@@ -48,3 +48,19 @@ export {
   knownFormatsList,
   MAX_HEADER_LENGTH,
 } from './formats';
+// EW XML document model + EW strings + units
+export {
+  decodeEwString,
+  type EwDocument,
+  EwElement,
+  EwXmlError,
+  encodeEwString,
+  ewXmlText,
+  milToNm,
+  mmToNm,
+  NM_PER_MIL,
+  NM_PER_MM,
+  nmToMil,
+  nmToMm,
+  parseEwXml,
+} from './xml';
