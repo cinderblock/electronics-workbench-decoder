@@ -20,6 +20,22 @@ export { type DecodeResult, decodeFile } from './decodeFile';
 // Jet / Access component databases (.prj, .usr)
 export { type ColumnInfo, decodeMdbBuffer, type MdbJson, type TableJson } from './decodeMdb';
 export { DEFAULT_BLOCK_SIZE, encodeBuffer } from './encode';
+// Multisim -> Ultiboard netlists (.ewnet)
+export {
+  type EwNetlist,
+  type EwnetComponent,
+  type EwnetLayer,
+  type EwnetNet,
+  type EwnetPin,
+  type EwnetPinRef,
+  type EwnetSection,
+  type EwnetToolInfo,
+  ewnetConnectivity,
+  ewnetText,
+  parseEwnet,
+  parseSExpr,
+  type SExpr,
+} from './ewnet';
 // Format registry
 export {
   detectFileFormat,

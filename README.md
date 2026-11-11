@@ -17,6 +17,7 @@ mainstream representations (and back, where the format permits).
 | `ewprj`    | `.ewprj`           | `compressed-xml` | `<file>.xml`     |
 | `multisim` | `.ms10` … `.ms19`  | `compressed-xml` | `<file>.xml`     |
 | `mdb`      | `.prj`, `.usr`     | `mdb`            | `<file>.json`    |
+| `ewnet`    | `.ewnet`           | `ewnet`          | `<file>.json`    |
 
 ### compressed-xml (`ewprj`, `multisim`)
 
@@ -29,6 +30,23 @@ big files into 900 000-decompressed-byte sections; `ewe` mirrors that.
 Decode and encode are both supported. A decode/encode/decode round-trip
 on every sample tested produces byte-identical XML, and the resulting
 files are accepted by `ewd`.
+
+### ewnet (`.ewnet`)
+
+The netlist Multisim writes for Ultiboard forward annotation: UTF-16LE text
+(with a BOM) holding S-expressions: `(ToolInfo ...)`, `(nets ...)` with
+per-net routing rules, `(components (instance "<package>" "<refdes>" ...))`
+with every pin's net, electrical type and label, and `(layers ...)`.
+
+`ewd` parses it into a typed object (`parseEwnet`), keeping fields it doesn't
+model in per-object `extra` maps plus the raw S-expression tree, so nothing
+is lost. `ewnetConnectivity()` turns it into net → `{ refdes, pin }[]`.
+Decode only; there is no encoder.
+
+Two things to know when comparing against an `.ewprj`'s own net table:
+Ultiboard upper-cases net names (`En` becomes `EN`), and an `.ewnet` is a
+snapshot from the last forward annotation, so it goes stale if the board
+was edited afterwards.
 
 ### mdb (`.prj`, `.usr`)
 
@@ -141,7 +159,7 @@ bun run ewd --verbose ./samples/Stocked.prj          # writes Stocked.prj.json
 ```
 
 For each input, writes `<filename>.xml` (compressed-xml) or
-`<filename>.json` (mdb) next to it.
+`<filename>.json` (mdb, ewnet) next to it.
 
 Options:
 
@@ -220,6 +238,8 @@ import {
   decodeBuffer,
   encodeBuffer,
   decodeMdbBuffer,
+  parseEwnet,
+  ewnetConnectivity,
   formatByKey,
 } from 'electronics-workbench-decoder';
 
@@ -227,17 +247,22 @@ import {
 const result = await decodeFile('Design1.ms14');
 if (result.kind === 'compressed-xml') {
   console.log(result.xml.toString()); // the decoded XML
-} else {
+} else if (result.kind === 'mdb') {
   console.log(result.data.tables.SYS_COMPONENT.rows); // Jet DB as a JS object
+} else {
+  console.log(result.netlist.components); // .ewnet netlist
 }
 
 // Buffer in, buffer out — no file I/O
 const { xml } = decodeBuffer(ewprjBytes);
 const ewprj = encodeBuffer(xml, formatByKey('ewprj')!);
 const db = decodeMdbBuffer(prjBytes); // → { format, source, tables: {...} }
+const netlist = parseEwnet(ewnetBytes); // → { toolInfo, nets, components, layers, tree }
+const nets = ewnetConnectivity(netlist); // Map<net name, { refdes, pin }[]>
 ```
 
-Exposed: `decodeFile`, `decodeBuffer`, `encodeBuffer`, `decodeMdbBuffer`, the
+Exposed: `decodeFile`, `decodeBuffer`, `encodeBuffer`, `decodeMdbBuffer`,
+`parseEwnet`, `ewnetConnectivity`, `ewnetText`, `parseSExpr`, the
 format registry (`FORMATS`, `formatByKey`, `formatForExtension`,
 `detectFormatByHeader`, `detectFileFormat`), and the supporting types
 (`EwbFormat`, `MdbJson`, `DecodeResult`, `DecodedXml`, …).

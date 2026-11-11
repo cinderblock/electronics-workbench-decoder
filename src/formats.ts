@@ -10,11 +10,13 @@
  *  - `mdb`: Microsoft Access Jet 3 databases, used for part libraries and
  *    project component databases (`.prj`, `.usr`). Decode supported; encode
  *    is deferred to in-place-edit-only and not yet implemented.
+ *  - `ewnet`: UTF-16LE S-expression netlist Multisim writes for Ultiboard
+ *    forward annotation (`.ewnet`). Decode (parse) only.
  */
 
 import { promises as fs } from 'node:fs';
 
-export type EwbFormatKind = 'compressed-xml' | 'mdb';
+export type EwbFormatKind = 'compressed-xml' | 'mdb' | 'ewnet';
 
 export interface EwbFormat {
   /** Short identifier for the `--format` CLI flag. */
@@ -54,6 +56,14 @@ export const FORMATS: readonly EwbFormat[] = [
     header: '\x00\x01\x00\x00Standard Jet DB',
     extensionPattern: /\.(prj|usr)$/i,
     kind: 'mdb',
+  },
+  {
+    key: 'ewnet',
+    label: 'Multisim -> Ultiboard netlist',
+    // UTF-16LE BOM followed by "(ToolInfo" in UTF-16LE.
+    header: '\xff\xfe(\x00T\x00o\x00o\x00l\x00I\x00n\x00f\x00o\x00',
+    extensionPattern: /\.ewnet$/i,
+    kind: 'ewnet',
   },
 ];
 

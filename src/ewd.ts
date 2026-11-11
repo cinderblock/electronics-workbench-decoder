@@ -2,6 +2,7 @@ import commandLineArgs from 'command-line-args';
 import winston from 'winston';
 import { decode } from './decode';
 import { decodeMdb } from './decodeMdb';
+import { decodeEwnetFile } from './ewnet';
 import { detectFileFormat, knownFormatsList } from './formats';
 
 async function decodeFile(file: string, logger: winston.Logger): Promise<void> {
@@ -18,6 +19,9 @@ async function decodeFile(file: string, logger: winston.Logger): Promise<void> {
       return;
     case 'mdb':
       await decodeMdb(file, logger);
+      return;
+    case 'ewnet':
+      await decodeEwnetFile(file, logger);
       return;
   }
 }

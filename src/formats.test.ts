@@ -28,7 +28,7 @@ describe('FORMATS table', () => {
 
   test('every entry has a valid kind discriminator', () => {
     for (const f of FORMATS) {
-      expect(['compressed-xml', 'mdb']).toContain(f.kind);
+      expect(['compressed-xml', 'mdb', 'ewnet']).toContain(f.kind);
     }
   });
 
