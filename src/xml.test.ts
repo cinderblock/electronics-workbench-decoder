@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
@@ -73,9 +74,11 @@ describe('parseEwXml', () => {
     expect(() => parseEwXml('<a>')).toThrow(/unclosed/);
   });
 
-  test('real designs round-trip', async () => {
+  // samples/ holds private designs and is not committed; CI skips this.
+  const samplesDir = join(import.meta.dir, '..', 'samples');
+  test.skipIf(!existsSync(join(samplesDir, 'Design1.ms14')))('real designs round-trip', async () => {
     for (const name of ['Design1.ms14', 'Design1.ewprj']) {
-      const buf = await readFile(join(import.meta.dir, '..', 'samples', name));
+      const buf = await readFile(join(samplesDir, name));
       const xml = decodeBuffer(buf).xml.toString('utf8');
       const d = parseEwXml(xml);
       expect(d.application).toBe(name.endsWith('.ms14') ? 'multisim' : 'ultiboard');
