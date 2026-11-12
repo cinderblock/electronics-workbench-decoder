@@ -1,6 +1,6 @@
 {
   "name": "electronics-workbench-decoder",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Decode (ewd) and encode (ewe) compressed Electronics Workbench / Multisim / Ultiboard files",
   "author": "Cameron Tacklind <cameron@tacklind.com>",
   "license": "ISC",
